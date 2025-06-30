@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: prueba_ia
+    ports:
+      - "5433:5432"
+    volumes:  # Persistencia de datos
+      - postgres_data:/var/lib/postgresql/data
+
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=prueba_ia
+      - DB_POSTGRESDB_USER=user
+      - DB_POSTGRESDB_PASSWORD=password
+      - N8N_HOST=0.0.0.0 
+      - N8N_PORT=5678
+    depends_on:
+      - postgres
+
+  ollama:
+    image: ollama/ollama
+    environment:
+    - OLLAMA_MODELS=llama3:8b-instruct-q4_0  # Descarga automática
+    ports:
+      - "11434:11434"
+    volumes:  # Persistencia de modelos descargados
+      - ollama_data:/root/.ollama
+
+# Volúmenes para persistencia
+volumes:
+  postgres_data:
+  ollama_data:
+
