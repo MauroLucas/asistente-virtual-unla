@@ -1,42 +1,71 @@
 services:
-  postgres:
+  # Base de CONOCIMIENTO (tus datos de negocio)
+  postgres_kb:
     image: postgres:15
+    container_name: postgres_kb
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: prueba_ia
+      POSTGRES_USER: ${POSTGRES_USER}        # ej: admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}            # ej: knowledge_db
     ports:
-      - "5433:5432"
-    volumes:  # Persistencia de datos
-      - postgres_data:/var/lib/postgresql/data
+      - "5433:5432"                          # Host -> Contenedor
+    volumes:
+      - postgres_kb_data:/var/lib/postgresql/data
+      - ./postgres_kb/initdb_kb:/docker-entrypoint-initdb.d:ro
+
+  # Postgres EXCLUSIVO para n8n
+  postgres_n8n:
+    image: postgres:15
+    container_name: postgres_n8n
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${N8N_USER}
+      POSTGRES_PASSWORD: ${N8N_PASSWORD}
+      POSTGRES_DB: ${N8N_DB}                 # ej: n8n_db
+    ports:
+      - "5435:5432"                          # Host -> Contenedor
+    volumes:
+      - postgres_n8n_data:/var/lib/postgresql/data
 
   n8n:
-    image: n8nio/n8n
-    ports:
-      - "5678:5678"
+    image: n8nio/n8n:latest
+    container_name: n8n
+    env_file:
+      - ./.env
     environment:
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_HOST=postgres_n8n
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=prueba_ia
-      - DB_POSTGRESDB_USER=user
-      - DB_POSTGRESDB_PASSWORD=password
-      - N8N_HOST=0.0.0.0 
+      - DB_POSTGRESDB_DATABASE=${N8N_DB}
+      - DB_POSTGRESDB_USER=${N8N_USER}
+      - DB_POSTGRESDB_PASSWORD=${N8N_PASSWORD}
+      - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
+    ports:
+      - "5678:5678"                          # UI de n8n
     depends_on:
-      - postgres
+      - postgres_n8n
 
   ollama:
-    image: ollama/ollama
+    image: ollama/ollama:latest
+    container_name: ollama
     environment:
-    - OLLAMA_MODELS=llama3:8b-instruct-q4_0  # Descarga automática
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-llama3:8b-instruct-q4_0}
     ports:
-      - "11434:11434"
-    volumes:  # Persistencia de modelos descargados
+      - "11434:11434"                        # API de Ollama
+    volumes:
       - ollama_data:/root/.ollama
 
-# Volúmenes para persistencia
 volumes:
-  postgres_data:
+  postgres_kb_data:
+  postgres_n8n_data:
   ollama_data:
+
+
+
+
+
 
