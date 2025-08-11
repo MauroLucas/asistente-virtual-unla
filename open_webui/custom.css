@@ -1,0 +1,6 @@
+:root {
+  --primary: #2ecc71; /* verde esmeralda aproximado */
+  --accent: #b58fe6;  /* violeta claro medio aproximado */
+}
+.app-header { background: var(--primary); color: white; }
+.brand-accent { color: var(--accent); }

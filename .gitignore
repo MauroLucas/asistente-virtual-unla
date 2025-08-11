@@ -1,0 +1,5 @@
+# Ignorar toda la carpeta openwebui_data
+openwebui_data/
+
+# Pero incluir el archivo custom.css
+!openwebui_data/custom.css

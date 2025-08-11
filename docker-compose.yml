@@ -34,9 +34,47 @@ services:
       - "11434:11434"
     volumes:  # Persistencia de modelos descargados
       - ollama_data:/root/.ollama
+    
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main   # ajustar según tag
+    ports:
+      - "3000:8080"
+    environment:
+    # Configuración básica
+      - WEBUI_NAME=UNLA Asistente Virtual Académico
+
+      # Configuración ESSENCIAL de modelos
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DEFAULT_MODEL=llama3:8b-instruct-q4_0
+
+      # Variables CLAVE para mostrar modelos
+      - ENABLE_LOCAL_MODEL_FILTER=false  # Permite ver todos los modelos
+      - SHOW_LOCAL_MODELS=true           # Muestra modelos locales
+
+      # Configuración de autenticación (IMPORTANTE)
+      - WEBUI_AUTH=false   # Desactiva autenticación completamente
+      - ENABLE_SIGNUP=false                    # Desactiva registro de nuevos usuarios
+      - DEFAULT_USER_ROLE=user                # Rol por defecto para usuarios
+      - ENABLE_LOGIN_FORM=false               # Mantén esto en true inicialmente
+
+      # Configuración para el asistente académico
+      - ENABLE_COMMUNITY_SHARING=false        # Desactiva compartir chats
+      - ENABLE_MESSAGE_RATING=true            # Permite calificar respuestas (útil para métricas)
+
+      # Configuración de interfaz
+      - DEFAULT_LOCALE=es                     # Interfaz en español
+      - SHOW_ADMIN_DETAILS=false             # Oculta detalles de admin a usuarios
+      # si usás OpenRouter, podés añadir variables para su API key/endpoint
+    volumes:
+      - ./open_webui/custom.css:/app/backend/data/static/css/custom.css  # si querés pre-cargar CSS
+      - ./open_webui/openwebui_data:/app/backend/data         # carpeta local para persistencia
+    depends_on:
+      - ollama
 
 # Volúmenes para persistencia
 volumes:
   postgres_data:
   ollama_data:
+  openwebui_data:
 
