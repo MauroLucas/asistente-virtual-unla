@@ -59,10 +59,33 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
+  # Servicio de ETL en Python
+  etl:
+    build:
+      context: ./ETL
+      dockerfile: Dockerfile
+    container_name: etl
+    env_file:
+      - ./.env
+    environment:
+      PGHOST: postgres_kb
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      DATA_DIR: /app/data                   # donde se montan los Excel
+    volumes:
+      - ./ETL/data:/app/data:ro             # Excel de entrada (solo lectura)
+      # (opcional) desarrollo en caliente del código:
+      # - ./ETL/app:/app/app:ro
+    depends_on:
+      - postgres_kb
+
 volumes:
   postgres_kb_data:
   postgres_n8n_data:
   ollama_data:
+
 
 
 
