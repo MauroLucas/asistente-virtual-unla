@@ -1,10 +1,10 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:17
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: prueba_ia
+      POSTGRES_USER: ${USER_POSTGRES}
+      POSTGRES_PASSWORD: ${PASSWORD_POSTGRES}
+      POSTGRES_DB: ${DB_POSTGRES}
     ports:
       - "5433:5432"
     volumes:  # Persistencia de datos
@@ -18,9 +18,9 @@ services:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=prueba_ia
-      - DB_POSTGRESDB_USER=user
-      - DB_POSTGRESDB_PASSWORD=password
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRES}
+      - DB_POSTGRESDB_USER=${USER_POSTGRES}
+      - DB_POSTGRESDB_PASSWORD=${PASSWORD_POSTGRES}
       - N8N_HOST=0.0.0.0 
       - N8N_PORT=5678
     depends_on:
@@ -42,15 +42,23 @@ services:
       - "3000:8080"
     environment:
     # Configuración básica
-      - WEBUI_NAME=UNLA Asistente Virtual Académico
+      - WEBUI_NAME="UNLA Asistente Virtual Académico"
 
       # Configuración ESSENCIAL de modelos
       - OLLAMA_BASE_URL=http://ollama:11434
-      - DEFAULT_MODEL=llama3:8b-instruct-q4_0
+      # - DEFAULT_MODEL=llama3:8b-instruct-q4_0
 
       # Variables CLAVE para mostrar modelos
-      - ENABLE_LOCAL_MODEL_FILTER=false  # Permite ver todos los modelos
+      - ENABLE_LOCAL_MODEL_FILTER=true  # Permite ver todos los modelos
       - SHOW_LOCAL_MODELS=true           # Muestra modelos locales
+
+      # ===== CONFIGURACIÓN OPENROUTER =====
+      #- OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+      #- OPENAI_API_KEY=${OPENROUTER_API_KEY}
+      #- ENABLE_OPENAI_API=true
+
+      # LIMITAR MODELOS DISPONIBLES (empezando por el más barato)
+      # - MODEL_FILTER_LIST=gpt-4.1-nano
 
       # Configuración de autenticación (IMPORTANTE)
       - WEBUI_AUTH=false   # Desactiva autenticación completamente
@@ -65,10 +73,13 @@ services:
       # Configuración de interfaz
       - DEFAULT_LOCALE=es                     # Interfaz en español
       - SHOW_ADMIN_DETAILS=false             # Oculta detalles de admin a usuarios
-      # si usás OpenRouter, podés añadir variables para su API key/endpoint
+      - ENABLE_WEBSEARCH=false             # Desactivar búsqueda web. Evita que el asistente busque información externa fuera de tu base de datos académica
+      - ENABLE_CHAT_DOWNLOAD=false         # Sin descarga de chats. Evita que se descarguen conversaciones con datos de otros estudiantes
+      - ENABLE_RAG_WEB_LOADER=false        # Sin RAG web. Desactiva la capacidad de cargar documentos web para RAG (Retrieval Augmented Generation). Evita que se puedan subir URLs o documentos externos para procesar
+      
+     
     volumes:
-      - ./open_webui/custom.css:/app/backend/data/static/css/custom.css  # si querés pre-cargar CSS
-      - ./open_webui/openwebui_data:/app/backend/data         # carpeta local para persistencia
+      - /open_webui/openwebui_data:/app/backend/data
     depends_on:
       - ollama
 
@@ -77,4 +88,3 @@ volumes:
   postgres_data:
   ollama_data:
   openwebui_data:
-

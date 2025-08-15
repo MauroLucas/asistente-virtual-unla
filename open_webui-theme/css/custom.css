@@ -1,0 +1,11 @@
+/* custom.css */
+#unla-logo-injected {
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* Ajustes para que el header no quede desalineado */
+.header, .user-greeting {
+  display: flex;
+  align-items: center;
+}
