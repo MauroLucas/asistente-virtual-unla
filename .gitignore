@@ -1,3 +1,5 @@
+.env
+
 # Ignorar toda la carpeta openwebui_data
 openwebui_data/
 
