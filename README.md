@@ -18,7 +18,8 @@ docker-compose exec ollama /bin/ollama pull llama3:8b-instruct-q4_0
 # 3. Regla clave: 
 Dentro de flujos n8n, siempre usar nombres de servicio (ollama, postgres) en lugar de localhost
 
-
+# 4. Ejecutar ETL
+docker compose run --rm etl
 
 
 # Probar interfaz grafica Open WebUI con modelo Llama3
@@ -41,4 +42,24 @@ docker-compose exec openwebui curl http://ollama:11434/api/tags
 Ve a http://localhost:3000
 Recarga la página (F5)
 Busca en "Selecciona un modelo" - ahora debería aparecer llama3:8b-instruct-q4_0
+
+
+#Archivo .env de ejemplo
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=knowledge_db
+POSTGRES_KB_HOST_PORT=5433
+
+APP_RO_USER=app_ro
+APP_RO_PASSWORD=app_ro_password
+ETL_USER=etl
+ETL_PASSWORD=etl_password
+
+N8N_DB=n8n_db
+N8N_USER=n8n_user
+N8N_PASSWORD=n8n_password
+POSTGRES_N8N_HOST_PORT=5435
+
+TZ=America/Argentina/Buenos_Aires
 
