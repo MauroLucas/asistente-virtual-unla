@@ -5,7 +5,7 @@ def get_lotes_config():
     lotes = [
         {
             "lote_key": 1,
-            "lote_descripcion": "Carga Excel Materias",
+            "lote_descripcion": "Carga Excel Materias Sistemas Plan 2024",
             "lote_esquema": "data",
             "lote_origen": "EXCEL",
         },

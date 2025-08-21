@@ -45,7 +45,7 @@ def _parse_correlativas(val):
             return json.loads(s)
         except Exception:
             pass
-    # fallback: lista separada por coma/;/
+    # fallback: lista separada por coma/;/|
     parts = [p.strip() for p in re_split(s) if p.strip()]
     return parts if parts else None
 
@@ -57,7 +57,7 @@ def ensure_table(conn):
     ddl = """
     CREATE SCHEMA IF NOT EXISTS data;
 
-    CREATE TABLE IF NOT EXISTS data.materias (
+    CREATE TABLE IF NOT EXISTS data.materias_sistemas_plan_2024 (
         "Carrera"                 TEXT,
         "Plan"                    TEXT,
         "Materia"                 TEXT,
@@ -77,7 +77,7 @@ def load_excel_to_table(conn, xlsx_path):
 
     # renombra DataFrame a las columnas esperadas exactamente
     df = df.rename(columns={v: k for k, v in colmap.items()})
-    df = df[EXPECTED]  # orden
+    df = df[EXPECTED]  # orden esperado
 
     # parseos/casts
     df["Correlativas"] = df["Correlativas"].apply(_parse_correlativas)
@@ -95,12 +95,12 @@ def load_excel_to_table(conn, xlsx_path):
         ))
 
     with conn.cursor() as cur:
-        # carga full-refresh
-        cur.execute('TRUNCATE TABLE data.materias;')
+        # vacía la tabla y REINICIA la identidad (id vuelve a 1)
+        cur.execute('TRUNCATE TABLE data.materias_sistemas_plan_2024;')
         execute_values(
             cur,
             """
-            INSERT INTO data.materias
+            INSERT INTO data.materias_sistemas_plan_2024
             ("Carrera","Plan","Materia","Correlativas","cuatrimestre",
              "Carga Horaria Semanal","Carga Horaria Total","Area")
             VALUES %s
@@ -114,14 +114,14 @@ def run(conn, data_dir):
 
     try:
         ensure_table(conn)
-        xlsx = os.path.join(data_dir or "/app/data", "materias.xlsx")
+        xlsx = os.path.join(data_dir or "/app/data", "materias_sistemas_plan_2024.xlsx")
         if not os.path.exists(xlsx):
             raise FileNotFoundError(f"No se encontró el archivo: {xlsx}")
 
         load_excel_to_table(conn, xlsx)
         conn.commit()
         finish_proceso(conn, proceso_key, 2)   # OK
-        print("✅ Carga de data.materias completada.")
+        print("✅ Carga de data.materias sistemas plan 2024 completada.")
     except Exception as e:
         conn.rollback()
         finish_proceso(conn, proceso_key, 8)   # ERROR
