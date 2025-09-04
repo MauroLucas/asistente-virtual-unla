@@ -6,11 +6,12 @@ services:
     env_file:
       - ./.env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}        # ej: admin
+      POSTGRES_USER: ${POSTGRES_USER} # ej: admin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}            # ej: knowledge_db
+      POSTGRES_DB: ${POSTGRES_DB} # ej: knowledge_db
+      TZ: ${TZ}
     ports:
-      - "5433:5432"                          # Host -> Contenedor
+      - "5433:5432" # Host -> Contenedor
     volumes:
       - postgres_kb_data:/var/lib/postgresql/data
       - ./postgres_kb/initdb_kb:/docker-entrypoint-initdb.d:ro
@@ -24,9 +25,10 @@ services:
     environment:
       POSTGRES_USER: ${N8N_USER}
       POSTGRES_PASSWORD: ${N8N_PASSWORD}
-      POSTGRES_DB: ${N8N_DB}                 # ej: n8n_db
+      POSTGRES_DB: ${N8N_DB} # ej: n8n_db
+      TZ: ${TZ}
     ports:
-      - "5435:5432"                          # Host -> Contenedor
+      - "5435:5432" # Host -> Contenedor
     volumes:
       - postgres_n8n_data:/var/lib/postgresql/data
 
@@ -45,7 +47,7 @@ services:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
     ports:
-      - "5678:5678"                          # UI de n8n
+      - "5678:5678" # UI de n8n
     depends_on:
       - postgres_n8n
 
@@ -55,9 +57,82 @@ services:
     environment:
       - OLLAMA_MODELS=${OLLAMA_MODELS:-llama3:8b-instruct-q4_0}
     ports:
-      - "11434:11434"                        # API de Ollama
+      - "11434:11434" # API de Ollama
     volumes:
       - ollama_data:/root/.ollama
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    # ajustar según tag
+    ports:
+      - "3000:8080"
+    environment:
+      # Configuración de Interfaz
+      # Establece el nombre principal de la interfaz web.
+      - WEBUI_NAME=UNLA Asistente Virtual Académico 
+      # Establece el idioma por defecto de la interfaz
+      - DEFAULT_LOCALE=es
+      # Oculta información administrativa (como el email del admin) a usuarios normales
+      - SHOW_ADMIN_DETAILS=false
+      # Controla si a los usuarios se les muestra el botón compartir en la comunidad.
+      - ENABLE_COMMUNITY_SHARING=false
+      # Habilita la función de calificación de mensajes (útil para métricas).
+      - ENABLE_MESSAGE_RATING=true
+
+      # Configuración esencial de modelos
+      # Configura la URL del backend de Ollama.
+      # - OLLAMA_BASE_URL=http://ollama:11434
+      # Establece un modelo de lenguaje predeterminado.
+      # - DEFAULT_MODELS=llama3:8b-instruct-q4_0
+
+      # Configuración de Conexión a Modelos/API
+      # Permite el uso de las API de OpenAI.
+      - ENABLE_OPENAI_API=true 
+      # Configura la URL de la API base de OpenAI.
+      - OPENAI_API_BASE_URL=http://n8n:5678/webhook/v1
+      # Establece la clave API de OpenAI.
+      - OPENAI_API_KEY=dummy-key # n8n no requiere key real para webhooks
+      # Establece un modelo de lenguaje predeterminado.
+      - DEFAULT_MODELS=gpt-4.1-mini
+      
+      # Configuración de Autenticación
+      # Esta configuración habilita o deshabilita el sistema de autenticación.
+      - WEBUI_AUTH=false 
+      # Activa o desactiva la creación de cuentas de usuario.
+      - ENABLE_SIGNUP=false
+      # Oculta el formulario de login
+      - ENABLE_LOGIN_FORM=false
+      # Establece el rol predeterminado asignado a los nuevos usuarios.
+      - DEFAULT_USER_ROLE=user # Los nuevos usuarios se activan automáticamente con permisos de usuario normales.
+      # Habilita o deshabilita la búsqueda web.
+      - ENABLE_WEB_SEARCH=false
+      # Controla si los administradores pueden exportar datos, chats y la base de datos 
+      # en el panel de administración. Por ahora, la exportación de bases de datos solo 
+      # funciona con bases de datos SQLite.
+      - ENABLE_ADMIN_EXPORT = false
+      # Permite a los administradores acceder directamente a los chats de otros usuarios. 
+      # Al deshabilitar esta opción, los administradores ya no pueden acceder a los chats 
+      # de los usuarios en el panel de administración. Si la deshabilita, considere 
+      # deshabilitar también ENABLE_ADMIN_EXPORT si usa SQLite, ya que las exportaciones 
+      # también contienen los chats de los usuarios.
+      - ENABLE_ADMIN_CHAT_ACCESS = false
+      # Al deshabilitar esta opción, los administradores se consideran usuarios normales 
+      # para el acceso al espacio de trabajo (modelos, conocimiento, indicaciones y 
+      # herramientas) y solo ven los elementos para los que tienen permiso explícito 
+      # a través del sistema de control de acceso existente. Esto también aplica a la 
+      # visibilidad de los modelos en el selector de modelos: los administradores se 
+      # considerarán usuarios normales: los modelos base y los modelos personalizados 
+      # para los que no tengan permiso explícito permanecerán ocultos. Si se establece 
+      # como "Verdadero" (predeterminado), los administradores tendrán acceso a todos los 
+      # elementos creados en el área del espacio de trabajo y a todos los modelos en el 
+      # selector de modelos, independientemente de sus permisos de acceso.
+      - BYPASS_ADMIN_ACCESS_CONTROL = false
+      
+    volumes:
+      - ./open_webui/openwebui_data:/app/backend/data
+    depends_on:
+      - n8n
+      - ollama
 
   # Servicio de ETL en Python
   etl:
@@ -73,58 +148,16 @@ services:
       PGDATABASE: ${POSTGRES_DB}
       PGUSER: ${POSTGRES_USER}
       PGPASSWORD: ${POSTGRES_PASSWORD}
-      DATA_DIR: /app/data                   # donde se montan los Excel
+      DATA_DIR: /app/data # donde se montan los Excel
     volumes:
-      - ./ETL/data:/app/data:ro             # Excel de entrada (solo lectura)
+      - ./ETL/data:/app/data:ro # Excel de entrada (solo lectura)
       # (opcional) desarrollo en caliente del código:
       # - ./ETL/app:/app/app:ro
     depends_on:
       - postgres_kb
-
-  openwebui:
-    image: ghcr.io/open-webui/open-webui:main   # ajustar según tag
-    ports:
-      - "3000:8080"
-    environment:
-    # Configuración básica
-      - WEBUI_NAME=UNLA Asistente Virtual Académico
-
-      # Configuración ESSENCIAL de modelos
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - DEFAULT_MODEL=llama3:8b-instruct-q4_0
-
-      # Variables CLAVE para mostrar modelos
-      - ENABLE_LOCAL_MODEL_FILTER=true  # Permite ver todos los modelos
-      - SHOW_LOCAL_MODELS=true           # Muestra modelos locales
-
-      # Configuración de autenticación (IMPORTANTE)
-      - WEBUI_AUTH=false   # Desactiva autenticación completamente
-      - ENABLE_SIGNUP=false                    # Desactiva registro de nuevos usuarios
-      - DEFAULT_USER_ROLE=user                # Rol por defecto para usuarios
-      - ENABLE_LOGIN_FORM=false               # Mantén esto en true inicialmente
-
-      # Configuración para el asistente académico
-      - ENABLE_COMMUNITY_SHARING=false        # Desactiva compartir chats
-      - ENABLE_MESSAGE_RATING=true            # Permite calificar respuestas (útil para métricas)
-
-      # Configuración de interfaz
-      - DEFAULT_LOCALE=es                     # Interfaz en español
-      - SHOW_ADMIN_DETAILS=false             # Oculta detalles de admin a usuarios
-      # si usás OpenRouter, podés añadir variables para su API key/endpoint
-    volumes:
-      - ./open_webui/openwebui_data:/app/backend/data         # carpeta local para persistencia
-    depends_on:
-      - ollama
 
 volumes:
   postgres_kb_data:
   postgres_n8n_data:
   ollama_data:
   openwebui_data:
-
-
-
-
-
-
-
