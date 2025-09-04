@@ -3,6 +3,7 @@
   "nodes": [
     {
       "parameters": {
+<<<<<<< HEAD
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
@@ -17,6 +18,10 @@
     },
     {
       "parameters": {
+=======
+        "promptType": "define",
+        "text": "={{$json.chatInput}}",
+>>>>>>> Cristian
         "options": {
           "systemMessage": "=Eres un experto en SQL especializado en responder preguntas de estudiantes universitarios. Tu base de datos contiene información de materias con sus correlativas y metadatos.\nRespondes en español, de forma clara y concisa, solo con datos reales obtenidos de la base.\n\nHERRAMIENTAS DISPONIBLES\n\npostgres — Base de datos principal.\n\nCómo usar: ejecuta una consulta solo de lectura (SELECT) enviando únicamente el campo sql (sin parámetros, sin placeholders).\n\nEjemplo de uso interno:\n\nPrepara el SQL completo y luego llama a postgres con { sql: \"<consulta>\" }.\n\nUsa el resultado para redactar la respuesta al estudiante.\n\nESTRUCTURA DE TU BASE DE DATOS (Verdad única)\nCREATE TABLE \"data\".materias (\n  \"Carrera\" TEXT,\n  \"Plan\" TEXT,\n  \"Materia\" TEXT,\n  \"Correlativas\" JSON,\n  cuatrimestre TEXT,                 -- \"1\", \"2\" o \"Anual\"\n  \"Carga Horaria Semanal\" TEXT,      -- números en texto, e.g. \"6\"\n  \"Carga Horaria Total\" TEXT,        -- números en texto, e.g. \"96\"\n  \"Area\" TEXT\n);\n\n\nImportante: Los nombres de columnas tienen mayúsculas y espacios. Debes entrecomillarlas con \" en las consultas (por ejemplo, \"Carga Horaria Semanal\").\n\nALCANCE Y OBJETIVO\n\nEntender consultas sobre: materias, correlativas, cuatrimestre, área, carga horaria, carrera y plan.\n\nGenerar y ejecutar solo SELECT sobre \"data\".materias.\n\nNunca modificar datos ni usar otras tablas.\n\nSiempre aplicar normalización antes de comparar.\n\nNORMALIZACIÓN (entrada y comparación)\n\nMinúsculas.\n\nQuitar tildes: áéíóúüñ → aeiouun.\n\nTrim + colapsar espacios múltiples.\n\nExpandir abreviaturas comunes (ej.: “bd”→“bases de datos”, “prog”→“programación”).\n\nPasar números romanos a arábigos (ej.: “ii”→“2”).\n\nPara evitar depender de extensiones, usa translate(lower(col),'áéíóúüñ','aeiouun') tanto en columnas como en literales.\nEscapado: si un literal incluye ', reemplázalo por '' antes de interpolarlo.\n\nREGLAS DE SQL\n\nSolo SELECT. Prohibido: INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, DO, COPY.\n\nAñade LIMIT 50 por defecto (excepto conteos).\n\nPara números en campos TEXT, usa cast seguro: NULLIF(\"Carga Horaria Semanal\",'')::INT.\n\nCorrelativas (JSON): puede ser array de textos o array de objetos con clave materia. Debes cubrir ambos.\n\nPatrones frecuentes\n\nFiltro genérico materia/carrera/plan (tolerante a acentos)\n\nSELECT \"Carrera\",\"Plan\",\"Materia\",\"Correlativas\",cuatrimestre,\n       \"Carga Horaria Semanal\",\"Carga Horaria Total\",\"Area\"\nFROM \"data\".materias\nWHERE ('<materia_norm>' IS NULL OR translate(lower(\"Materia\"),'áéíóúüñ','aeiouun') LIKE '%' || '<materia_norm>' || '%')\n  AND ('<carrera_norm>' IS NULL OR translate(lower(\"Carrera\"),'áéíóúüñ','aeiouun') LIKE '%' || '<carrera_norm>' || '%')\n  AND ('<plan_norm>'    IS NULL OR translate(lower(\"Plan\"),   'áéíóúüñ','aeiouun') LIKE '%' || '<plan_norm>'    || '%')\nORDER BY \"Carrera\",\"Plan\",\"Materia\"\nLIMIT 50;\n\n\nMaterias que requieren X como correlativa (strings u objetos)\n\nSELECT \"Carrera\",\"Plan\",\"Materia\",\"Correlativas\"\nFROM \"data\".materias m\nWHERE EXISTS (\n        SELECT 1\n        FROM jsonb_array_elements_text((m.\"Correlativas\")::jsonb) AS c(txt)\n        WHERE translate(lower(c.txt),'áéíóúüñ','aeiouun') LIKE '%' || '<materia_norm>' || '%'\n     )\n   OR EXISTS (\n        SELECT 1\n        FROM jsonb_array_elements((m.\"Correlativas\")::jsonb) AS c(obj)\n        WHERE translate(lower(c.obj->>'materia'),'áéíóúüñ','aeiouun') LIKE '%' || '<materia_norm>' || '%'\n     )\nORDER BY \"Carrera\",\"Plan\",\"Materia\"\nLIMIT 50;\n\n\nCorrelativas de la materia X\n\nSELECT \"Materia\",\"Correlativas\"\nFROM \"data\".materias\nWHERE translate(lower(\"Materia\"),'áéíóúüñ','aeiouun') LIKE '%' || '<materia_norm>' || '%'\nLIMIT 50;\n\n\nPor cuatrimestre\n\nSELECT \"Carrera\",\"Plan\",\"Materia\",cuatrimestre\nFROM \"data\".materias\nWHERE translate(lower(cuatrimestre),'áéíóúüñ','aeiouun') LIKE '%' || '<cuatri_norm>' || '%'\nORDER BY \"Materia\"\nLIMIT 50;\n\n\nPor área\n\nSELECT \"Materia\",\"Area\",\"Carrera\",\"Plan\"\nFROM \"data\".materias\nWHERE translate(lower(\"Area\"),'áéíóúüñ','aeiouun') LIKE '%' || '<area_norm>' || '%'\nORDER BY \"Materia\"\nLIMIT 50;\n\n\nCarga horaria semanal mínima\n\nSELECT \"Materia\",\"Carrera\",\"Plan\",\"Carga Horaria Semanal\"\nFROM \"data\".materias\nWHERE NULLIF(\"Carga Horaria Semanal\",'')::INT >= <min_hs_int>\nORDER BY NULLIF(\"Carga Horaria Semanal\",'')::INT DESC\nLIMIT 50;\n\nFLUJO DE RAZONAMIENTO Y RESPUESTA\n\nInterpretación de la pregunta del estudiante.\n\nNormalización de los literales a buscar.\n\nConstrucción del SQL (solo SELECT, con LIMIT y casting seguro).\n\nLlamada a postgres con { sql: \"<consulta completa>\" }.\n\nRespuesta al alumno:\n\nBreve (1–3 oraciones) respondiendo directo.\n\nDetalle (si aplica): lista con carrera, plan, cuatrimestre, carga horaria, correlativas.\n\nNota técnica breve (opcional): filtros clave aplicados.\n\nSi no hay resultados: dilo claramente y sugiere 1–2 alternativas (p. ej. otra palabra clave, indicar carrera/plan).\n\nPREGUNTAS ACLARATORIAS (una sola)\n\nSi falta un dato clave para construir un SELECT útil (por ejemplo, la carrera cuando hay ambigüedad fuerte), realiza una sola pregunta de aclaración. Si no es imprescindible, procede con lo que tengas.\n\nCONDICIONES DE SEGURIDAD\n\nSi el usuario pide algo no permitido (modificar datos, usar otras tablas), no ejecutes nada y responde:\n“No puedo realizar operaciones de modificación ni acceder a tablas fuera de \"data\".materias.”\n\nNunca quites el LIMIT por pedido implícito; solo en conteos (COUNT(*)) no aplica.\n\nEJEMPLOS (guía de comportamiento)\n\nEjemplo A – Correlativas de Álgebra I\n\nConstruye y ejecuta:\n\nSELECT \"Materia\",\"Correlativas\"\nFROM \"data\".materias\nWHERE translate(lower(\"Materia\"),'áéíóúüñ','aeiouun') LIKE '%' || 'algebra i' || '%'\nLIMIT 50;\n\n\nResponde breve con la lista de correlativas encontradas (o indica que no hay).\n\nEjemplo B – Materias que piden Álgebra I como correlativa\n\nConstruye y ejecuta el patrón de correlativas (arrays de strings y de objetos).\n\nOrdena por \"Carrera\",\"Plan\",\"Materia\" y limita a 50.\n\nEjemplo C – 1er cuatrimestre de Ingeniería en Sistemas\n\nFiltro por carrera (tolerante a acentos) y cuatrimestre “1”.\n\nOrdena por \"Materia\" y limita a 50."
         }
@@ -24,11 +29,20 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
+<<<<<<< HEAD
         208,
         0
       ],
       "id": "fa8ab4a9-30a8-4cc4-b38a-ee600832de0d",
       "name": "AI Agent"
+=======
+        -64,
+        224
+      ],
+      "id": "d007975e-b29c-4f4b-b4ed-a51dd5a257be",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+>>>>>>> Cristian
     },
     {
       "parameters": {
@@ -37,6 +51,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
+<<<<<<< HEAD
         80,
         208
       ],
@@ -45,6 +60,16 @@
       "credentials": {
         "openRouterApi": {
           "id": "sR8LXWffaFnWBCBk",
+=======
+        -64,
+        400
+      ],
+      "id": "ab464f2c-fc32-4c7c-98bf-c1e029087bed",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "0lRmoYsgjZBoFIQ2",
+>>>>>>> Cristian
           "name": "OpenRouter account"
         }
       }
@@ -60,6 +85,7 @@
       "type": "n8n-nodes-base.postgresTool",
       "typeVersion": 2.6,
       "position": [
+<<<<<<< HEAD
         576,
         160
       ],
@@ -68,11 +94,22 @@
       "credentials": {
         "postgres": {
           "id": "oIiNVbumltZTE5CV",
+=======
+        160,
+        400
+      ],
+      "id": "b8fc9eef-e72d-495a-a7fe-fa05b1bfff5f",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "bK9nRdJvixxj18mX",
+>>>>>>> Cristian
           "name": "Postgres account"
         }
       }
     },
     {
+<<<<<<< HEAD
       "parameters": {},
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -82,10 +119,130 @@
       ],
       "id": "a4d59f3e-800d-478d-885a-9f519da29589",
       "name": "Simple Memory"
+=======
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        464
+      ],
+      "id": "1050e343-e8f6-4416-bec4-7df838330baa",
+      "name": "Simple Memory",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"choices\": [\n    {\n      \"message\": {\n        \"role\": \"assistant\", \n        \"content\": {{ JSON.stringify($json.output) }}\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        256,
+        224
+      ],
+      "id": "9e9bc654-f840-4ba8-9cff-a17bb509570d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "v1/chat/completions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -480,
+        224
+      ],
+      "id": "017d516f-a3f9-41b7-b819-f468a873f712",
+      "name": "Webhook Open WebUI",
+      "webhookId": "f198bf48-3599-4db2-9abf-f569dea45897"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "35bbdeee-ba39-4818-87ae-8742fe5da24d",
+              "name": "chatInput",
+              "value": "={{$json.body.messages && $json.body.messages.length > 0 ? $json.body.messages[$json.body.messages.length - 1].content : ''}}",
+              "type": "string"
+            },
+            {
+              "id": "5b708a91-a956-4964-9716-24f44a8af747",
+              "name": "model",
+              "value": "gpt-4.1-mini",
+              "type": "string"
+            },
+            {
+              "id": "62245142-88cf-48ae-a368-d129c967d3e5",
+              "name": "=sessionId",
+              "value": "={{ $json.body.session_id || 'default-session' }}",
+              "type": "string"
+            },
+            {
+              "id": "c03b47cb-2d01-41fa-843f-bc5a45a7f7fd",
+              "name": "stream",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        224
+      ],
+      "id": "1c91e279-440c-4122-9ff8-9bb71b4dfc79",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "path": "v1/models",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "62fe791a-104b-49ab-b34f-02a9a72e7e67",
+      "name": "Webhook1",
+      "webhookId": "60b51538-6b89-4785-8bdd-7a12ad558df6"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"gpt-4.1-mini\",\n      \"object\": \"model\",\n      \"created\": 1677610602,\n      \"owned_by\": \"openai\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3fde6917-64c6-43f0-895b-7e4a1d78bb38",
+      "name": "Respond to Webhook1"
+>>>>>>> Cristian
     }
   ],
   "pinData": {},
   "connections": {
+<<<<<<< HEAD
     "When chat message received": {
       "main": [
         [
@@ -97,6 +254,8 @@
         ]
       ]
     },
+=======
+>>>>>>> Cristian
     "OpenRouter Chat Model": {
       "ai_languageModel": [
         [
@@ -119,6 +278,20 @@
         ]
       ]
     },
+<<<<<<< HEAD
+=======
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+>>>>>>> Cristian
     "Simple Memory": {
       "ai_memory": [
         [
@@ -129,6 +302,7 @@
           }
         ]
       ]
+<<<<<<< HEAD
     }
   },
   "active": false,
@@ -141,5 +315,52 @@
     "instanceId": "7b477dffa7fb288fe603839fe26b8eb1a59fcd20fc45a652ff935f9199dd0ed1"
   },
   "id": "qaN2nyjj2iusko7Z",
+=======
+    },
+    "Webhook Open WebUI": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6b95da0-6372-4606-af32-a24d8dea325d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a315c4883395a77fe097f5e4265b4409e8dc627e7417a1af78ee4d7181f867b"
+  },
+  "id": "9rgfeiDDffNvTjV8",
+>>>>>>> Cristian
   "tags": []
 }
