@@ -89,3 +89,5 @@ POSTGRES_N8N_HOST_PORT=5435
 
 TZ=America/Argentina/Buenos_Aires
 
+WORD_FOLDER_PROGRAMAS_URL="https://drive.google.com/drive/folders/ejemplo_carpeta_programas"
+
