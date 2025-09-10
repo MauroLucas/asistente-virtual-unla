@@ -109,13 +109,13 @@ services:
       # Controla si los administradores pueden exportar datos, chats y la base de datos 
       # en el panel de administración. Por ahora, la exportación de bases de datos solo 
       # funciona con bases de datos SQLite.
-      - ENABLE_ADMIN_EXPORT = false
+      - ENABLE_ADMIN_EXPORT=false
       # Permite a los administradores acceder directamente a los chats de otros usuarios. 
       # Al deshabilitar esta opción, los administradores ya no pueden acceder a los chats 
       # de los usuarios en el panel de administración. Si la deshabilita, considere 
       # deshabilitar también ENABLE_ADMIN_EXPORT si usa SQLite, ya que las exportaciones 
       # también contienen los chats de los usuarios.
-      - ENABLE_ADMIN_CHAT_ACCESS = false
+      - ENABLE_ADMIN_CHAT_ACCESS=false
       # Al deshabilitar esta opción, los administradores se consideran usuarios normales 
       # para el acceso al espacio de trabajo (modelos, conocimiento, indicaciones y 
       # herramientas) y solo ven los elementos para los que tienen permiso explícito 
@@ -126,7 +126,7 @@ services:
       # como "Verdadero" (predeterminado), los administradores tendrán acceso a todos los 
       # elementos creados en el área del espacio de trabajo y a todos los modelos en el 
       # selector de modelos, independientemente de sus permisos de acceso.
-      - BYPASS_ADMIN_ACCESS_CONTROL = false
+      - BYPASS_ADMIN_ACCESS_CONTROL=false
       
     volumes:
       - ./open_webui/openwebui_data:/app/backend/data
