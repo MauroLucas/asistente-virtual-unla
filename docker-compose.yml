@@ -61,23 +61,27 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
-  openwebui:
-    image: ghcr.io/open-webui/open-webui:main
+  open-webui:
+    build: 
+      context: ./open-webui-theme 
+      dockerfile: Dockerfile 
+    # image: ghcr.io/open-webui/open-webui:v0.6.29
+    container_name: open-webui
     # ajustar según tag
     ports:
       - "3000:8080"
     environment:
       # Configuración de Interfaz
       # Establece el nombre principal de la interfaz web.
-      - WEBUI_NAME=UNLA Asistente Virtual Académico 
+      - WEBUI_NAME=UNLa Asistente Virtual Académico 
       # Establece el idioma por defecto de la interfaz
       - DEFAULT_LOCALE=es
       # Oculta información administrativa (como el email del admin) a usuarios normales
-      - SHOW_ADMIN_DETAILS=false
+      - SHOW_ADMIN_DETAILS=False
       # Controla si a los usuarios se les muestra el botón compartir en la comunidad.
-      - ENABLE_COMMUNITY_SHARING=false
+      - ENABLE_COMMUNITY_SHARING=False
       # Habilita la función de calificación de mensajes (útil para métricas).
-      - ENABLE_MESSAGE_RATING=true
+      - ENABLE_MESSAGE_RATING=True
 
       # Configuración esencial de modelos
       # Configura la URL del backend de Ollama.
@@ -87,35 +91,62 @@ services:
 
       # Configuración de Conexión a Modelos/API
       # Permite el uso de las API de OpenAI.
-      - ENABLE_OPENAI_API=true 
+      - ENABLE_OPENAI_API=True 
       # Configura la URL de la API base de OpenAI.
       - OPENAI_API_BASE_URL=http://n8n:5678/webhook/v1
       # Establece la clave API de OpenAI.
       - OPENAI_API_KEY=dummy-key # n8n no requiere key real para webhooks
       # Establece un modelo de lenguaje predeterminado.
-      - DEFAULT_MODELS=gpt-4.1-mini
+      - DEFAULT_MODELS=UNLa Asistente Virtual Académico
+
+      # Deshabilitar características que pueden mostrar Arena Model
+      - ENABLE_EVALUATION_ARENA_MODELS=False
+      
+      # Control de persistencia / caché
+      # Las variables de configuración se leen siempre de las variables de entorno 
+      # en cada reinicio
+      - ENABLE_PERSISTENT_CONFIG=False
+      # Se desactiva la caché. Cada solicitud de lista de modelos consulta directamente a los 
+      # proveedores (Ollama/OpenAI)
+      - MODELS_CACHE_TTL=0
+      
       
       # Configuración de Autenticación
       # Esta configuración habilita o deshabilita el sistema de autenticación.
-      - WEBUI_AUTH=false 
+      - WEBUI_AUTH=False 
       # Activa o desactiva la creación de cuentas de usuario.
-      - ENABLE_SIGNUP=false
+      - ENABLE_SIGNUP=False
       # Oculta el formulario de login
-      - ENABLE_LOGIN_FORM=false
+      - ENABLE_LOGIN_FORM=False
       # Establece el rol predeterminado asignado a los nuevos usuarios.
       - DEFAULT_USER_ROLE=user # Los nuevos usuarios se activan automáticamente con permisos de usuario normales.
       # Habilita o deshabilita la búsqueda web.
-      - ENABLE_WEB_SEARCH=false
+      - ENABLE_WEB_SEARCH=False
+      # Activa el guardado en tiempo real de las conversaciones en la base de datos de 
+      # Open WebUI
+      - ENABLE_REALTIME_CHAT_SAVE=True
+      # Indica que Open WebUI debe reenviar al backend (tu API/n8n) cabeceras 
+      # HTTP con información del usuario
+      - ENABLE_FORWARD_USER_INFO_HEADERS=True
+      # Controla la política SameSite de las cookies de sesión de Open WebUI.
+      # lax: permite cookies en la mayoría de casos de navegación, pero bloquea algunos 
+      # contextos cross-site inseguros.
+      - WEBUI_SESSION_COOKIE_SAME_SITE=lax
+      # Define si las cookies de sesión solo deben enviarse por conexiones HTTPS.
+      # Si True: las cookies solo viajan por HTTPS.
+      # Si False: también viajan por HTTP (útil en entornos de desarrollo local 
+      # sin certificado).
+      - WEBUI_SESSION_COOKIE_SECURE=False
       # Controla si los administradores pueden exportar datos, chats y la base de datos 
       # en el panel de administración. Por ahora, la exportación de bases de datos solo 
       # funciona con bases de datos SQLite.
-      - ENABLE_ADMIN_EXPORT=false
+      - ENABLE_ADMIN_EXPORT=False
       # Permite a los administradores acceder directamente a los chats de otros usuarios. 
       # Al deshabilitar esta opción, los administradores ya no pueden acceder a los chats 
       # de los usuarios en el panel de administración. Si la deshabilita, considere 
       # deshabilitar también ENABLE_ADMIN_EXPORT si usa SQLite, ya que las exportaciones 
       # también contienen los chats de los usuarios.
-      - ENABLE_ADMIN_CHAT_ACCESS=false
+      - ENABLE_ADMIN_CHAT_ACCESS=False
       # Al deshabilitar esta opción, los administradores se consideran usuarios normales 
       # para el acceso al espacio de trabajo (modelos, conocimiento, indicaciones y 
       # herramientas) y solo ven los elementos para los que tienen permiso explícito 
@@ -126,13 +157,14 @@ services:
       # como "Verdadero" (predeterminado), los administradores tendrán acceso a todos los 
       # elementos creados en el área del espacio de trabajo y a todos los modelos en el 
       # selector de modelos, independientemente de sus permisos de acceso.
-      - BYPASS_ADMIN_ACCESS_CONTROL=false
+      # - BYPASS_ADMIN_ACCESS_CONTROL=False
       
     volumes:
-      - ./open_webui/openwebui_data:/app/backend/data
+      - openwebui_data:/app/backend/data
     depends_on:
       - n8n
       - ollama
+
 
   # Servicio de ETL en Python
   etl:
@@ -155,6 +187,7 @@ services:
       # - ./ETL/app:/app/app:ro
     depends_on:
       - postgres_kb
+
 
 volumes:
   postgres_kb_data:
