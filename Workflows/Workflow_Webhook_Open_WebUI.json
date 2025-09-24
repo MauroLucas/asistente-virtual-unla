@@ -15,7 +15,7 @@
         320,
         224
       ],
-      "id": "5bc4d6c4-1c93-4c6c-8305-ec1ec1c39d5f",
+      "id": "adcf9756-a3a9-4d90-8f89-e0bae185c552",
       "name": "AI Agent",
       "alwaysOutputData": false
     },
@@ -29,11 +29,11 @@
         320,
         400
       ],
-      "id": "5c07cc66-4654-486b-a4f3-c0426809099d",
+      "id": "ddd6db42-df98-4d7e-81cb-72c8c05e4c38",
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
-          "id": "thRku8ILWUQbnY4r",
+          "id": "TcetlyXoxXSXRIXq",
           "name": "OpenRouter account"
         }
       }
@@ -52,11 +52,11 @@
         544,
         400
       ],
-      "id": "66e3a553-a501-4317-aa86-ecc0ebe74169",
+      "id": "953d53a2-fd5c-407a-a713-04a631ab01c2",
       "name": "Execute a SQL query in Postgres",
       "credentials": {
         "postgres": {
-          "id": "CdENNqQEnpYuuxNe",
+          "id": "WKEygwxOl9YcZfNh",
           "name": "Postgres account"
         }
       }
@@ -73,7 +73,7 @@
         432,
         512
       ],
-      "id": "4fa80a80-5ccb-4ffc-a668-3de344d44226",
+      "id": "798cadaf-e462-4b5f-b303-948524b438da",
       "name": "Memory - Session",
       "notesInFlow": false
     },
@@ -89,7 +89,7 @@
         0,
         0
       ],
-      "id": "4c2ecbf3-4d03-49f2-b9f3-74cf80e66f43",
+      "id": "51881391-4411-4c79-89fd-dd7004158e5a",
       "name": "Webhook - Models",
       "webhookId": "60b51538-6b89-4785-8bdd-7a12ad558df6"
     },
@@ -106,14 +106,14 @@
         -144,
         224
       ],
-      "id": "f8bf7b22-b386-4c1d-8859-05f454226676",
+      "id": "b852c0fe-ed74-44db-8cca-143f7db22a3b",
       "name": "Webhook - Chat",
       "webhookId": "f198bf48-3599-4db2-9abf-f569dea45897"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"UNLa Asistente Virtual Académico\",\n      \"object\": \"model\",\n      \"created\": 1677610602,\n      \"owned_by\": \"UNLa\"\n    }\n  ]\n}",
+        "responseBody": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"UNLa_Asistente_Virtual_Académico\",\n      \"name\": \"UNLa Asistente Virtual Académico\",\n      \"object\": \"model\",\n      \"owned_by\": \"UNLa\",\n      \"created\": 1677610602\n    }\n  ]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -122,7 +122,7 @@
         208,
         0
       ],
-      "id": "518d50d1-50fe-4258-bf67-c23fdea21fe6",
+      "id": "7bef8ea3-bb01-43f0-be0e-99ef4517fb51",
       "name": "Response - Models"
     },
     {
@@ -137,7 +137,7 @@
         640,
         224
       ],
-      "id": "5193d56c-bd99-469f-9e13-a2013e9a0191",
+      "id": "057c0a6b-8b0d-497c-8c43-e6848b62d1cf",
       "name": "Response - Chat"
     },
     {
@@ -159,7 +159,7 @@
             {
               "id": "5b708a91-a956-4964-9716-24f44a8af747",
               "name": "model",
-              "value": "={{\n  (() => {\n    const allowed = ['gpt-4.1-mini','gpt-4.1','UNLa Asistente Virtual Académico'];\n    const inc = ($json.body && $json.body.model) ? String($json.body.model).trim() : '';\n    const incNorm = inc.toLowerCase();\n\n    if (allowed.map(a => a.toLowerCase()).includes(incNorm)) return inc;\n\n    if (incNorm.includes('unla')) return 'gpt-4.1-mini';\n\n    if (incNorm.includes('arena')) return 'gpt-4.1-mini';\n\n    return 'gpt-4.1-mini';\n  })()\n}}\n",
+              "value": "={{\n  (() => {\n    const allowed = ['gpt-4.1-mini','gpt-4.1','UNLa_Asistente_Virtual_Académico'];\n    const inc = ($json.body && $json.body.model) ? String($json.body.model).trim() : '';\n    const incNorm = inc.toLowerCase();\n\n    if (allowed.map(a => a.toLowerCase()).includes(incNorm)) return inc;\n\n    if (incNorm.includes('unla')) return 'gpt-4.1-mini';\n\n    if (incNorm.includes('arena')) return 'gpt-4.1-mini';\n\n    return 'gpt-4.1-mini';\n  })()\n}}\n",
               "type": "string"
             }
           ]
@@ -173,7 +173,7 @@
         80,
         224
       ],
-      "id": "5a0f8deb-b43e-46fc-903e-59dcdd62ece6",
+      "id": "01c9968e-b6c7-4ded-bcce-0fdb634caea6",
       "name": "Prepare - Chat Payload"
     }
   ],
@@ -245,11 +245,6 @@
         ]
       ]
     },
-    "Response - Chat": {
-      "main": [
-        []
-      ]
-    },
     "Prepare - Chat Payload": {
       "main": [
         [
@@ -262,15 +257,15 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0df05280-3d66-44c7-af4b-db72e21baa7d",
+  "versionId": "121b9762-5fd9-4a8f-8d50-06b2efd56ce0",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "f844463be1fb64af8a5427a2c2a9594187c1e7bca9110736ac6bf804bbed21bb"
+    "instanceId": "ad60d2f71bf6fb711e04923b30424955655d79f907d2203cb58fe577d07a14b2"
   },
-  "id": "Qa1YAwZxdZkaP6BJ",
+  "id": "1PnUTDiiZpCk8hhD",
   "tags": []
 }

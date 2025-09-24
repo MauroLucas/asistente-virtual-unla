@@ -97,7 +97,7 @@ services:
       # Establece la clave API de OpenAI.
       - OPENAI_API_KEY=dummy-key # n8n no requiere key real para webhooks
       # Establece un modelo de lenguaje predeterminado.
-      - DEFAULT_MODELS=UNLa Asistente Virtual Académico
+      - DEFAULT_MODELS=UNLa_Asistente_Virtual_Académico
 
       # Deshabilitar características que pueden mostrar Arena Model
       - ENABLE_EVALUATION_ARENA_MODELS=False
