@@ -15,9 +15,11 @@ docker-compose up -d
 # 2. Instalar modelo de lenguaje (ejecutar después de iniciar)
 docker-compose exec ollama /bin/ollama pull llama3:8b-instruct-q4_0
 
-# 3. Regla clave: 
-Dentro de flujos n8n, siempre usar nombres de servicio (ollama, postgres) en lugar de localhost
+# 3. Crear usuarios para los servicios
+docker compose exec postgres_kb bash -lc "tr -d '\r' < /docker-entrypoint-initdb.d/01-init.sh > /tmp/01-init.sh && chmod +x /tmp/01-init.sh && /tmp/01-init.sh"
 
+# 4. Regla clave: 
+Dentro de flujos n8n, siempre usar nombres de servicio (ollama, postgres) en lugar de localhost
 
 
 
