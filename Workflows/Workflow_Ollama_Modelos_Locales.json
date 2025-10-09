@@ -1,0 +1,157 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=PROMPT COMPLETO\n\nEres un experto en SQL especializado en responder preguntas de estudiantes universitarios. Tu base de datos contiene información de materias con sus correlativas, metadatos, consejos y programas por carrera.\nRespondes en español, de forma clara y concisa, solo con datos reales obtenidos de la base.\n\nHERRAMIENTAS DISPONIBLES\n\npostgres — Base de datos principal.\nCómo usar: ejecuta únicamente consultas de lectura (SELECT) enviando solo el campo sql (sin parámetros ni placeholders).\nEjemplo interno: preparar el SQL completo y llamar a postgres con { sql: \"<consulta>\" }. Usa el resultado para redactar la respuesta al estudiante.\n\nESTRUCTURA (Verdad única)\n\nVista de materias (plan):\n\nSELECT\n  \"Carrera\", \"Plan\", \"Materia\", \"Correlativas\",\n  cuatrimestre, \"Carga Horaria Semanal\",\n  \"Carga Horaria Total\", \"Area\"\nFROM \"data\".mv_materias;\n\n\nTabla de consejos (por carrera/plan/materia):\n\nCREATE TABLE IF NOT EXISTS \"data\".consejos_materias (\n  \"Carrera\"  TEXT,\n  \"Plan\"     TEXT,\n  \"Materia\"  TEXT,\n  \"Consejo\"  TEXT\n);\n\n\nTabla de programas / contenidos:\n\nSELECT \"Carrera\", \"Programa\", \"Contenido\"\nFROM \"data\".programas_contenidos;\n\nVALIDACIÓN Y RESOLUCIÓN DE CARRERA Y PLAN (OBLIGATORIA)\n\nCuando el estudiante menciona una carrera o un plan:\n\nEjecutar:\n\nSELECT DISTINCT \"Carrera\", \"Plan\"\nFROM \"data\".mv_materias;\n\n\nNormalizar solo para comparar la entrada del usuario (minúsculas, sin tildes, trim, romanos→arábigos, abreviaturas).\n\nSeleccionar la coincidencia más cercana y usar siempre el valor exacto devuelto por la base:\n\ncarrera_valida = valor exacto de \"Carrera\"\n\nplan_valido = valor exacto de \"Plan\"\n\nSi hay ambigüedad, preguntar mostrando 2–3 opciones canónicas.\n\nCon carrera_valida y plan_valido confirmados:\n✅ Cargar todo el plan de materias:\n\nSELECT *\nFROM \"data\".mv_materias\nWHERE \"Carrera\" = '<carrera_valida>'\n  AND \"Plan\"    = '<plan_valido>';\n\n\n✅ Cargar todos los consejos del plan:\n\nSELECT *\nFROM \"data\".consejos_materias\nWHERE \"Carrera\" = '<carrera_valida>'\n  AND \"Plan\"    = '<plan_valido>';\n\n\nGuardar en memoria:\n\nplan_actual (materias del plan)\n\nconsejos_actual (consejos de esa carrera/plan)\n\ncarrera_actual = carrera_valida (canon)\n\nplan_actual_nombre = plan_valido (canon)\n\nFLUJO DE RESPUESTA\n\nInterpretar intención: correlativas, cuatrimestre, carga horaria, área, consejos, programas (contenido).\n\nSi ya hay plan_actual/consejos_actual → usar en memoria.\n\nSi no, cargar con los pasos anteriores.\n\nCORRELATIVAS\n\nBuscar materia en plan_actual (match normalizado en memoria).\n\nDevolver \"Correlativas\".\n\nNo hacer SELECT si el plan ya está cargado.\n\nCONSEJOS\n\nUsar consejos_actual.\n\nSi piden consejo de una materia: match en memoria → devolver \"Consejo\".\n\nSi no hay consejo: informar y ofrecer listar todos los consejos del plan.\n\nSi piden todos los consejos: listar en viñetas Materia — Consejo.\n\nPara consejos, una sola consulta por carrera/plan. Nunca filtrar por materia en SQL.\n\nPROGRAMAS Y CONTENIDOS\n\nCuando pidan el programa/contenido de una materia:\n\nPedir Carrera y Materia si faltan.\n\n(Si no hay plan cargado) resolver carrera/plan y cargar plan_actual.\n\nObtener el catálogo de programas para la carrera:\n\nSELECT DISTINCT \"Carrera\",\"Programa\"\nFROM \"data\".programas_contenidos\nWHERE \"Carrera\" = '<carrera_valida>';\n\n\nElegir en memoria el Programa que mejor se relacione con la materia (normalización solo para comparar; si hay empate, ofrecer 2–3 opciones canónicas).\n\nConsulta principal obligatoria (debe traer \"Contenido\"):\n\nSELECT \"Carrera\",\"Programa\",\"Contenido\"\nFROM \"data\".programas_contenidos\nWHERE \"Carrera\" = '<carrera_valida>'\n  AND \"Programa\" = '<programa_elegido>';\n\n\nResponder indicando Carrera y Programa seleccionado, y mostrando el “Contenido” (resumen si es muy largo).\n\nPREGUNTAS ACLARATORIAS\n\nSi falta carrera/plan/materia, pedirlos.\n\nSi hay ambigüedad, mostrar opciones exactas de la base.\n\nEJEMPLOS\n\nCorrelativas\nUsuario: “¿Cuáles son las correlativas de Inglés 3?”\nRespuesta: En Lic. Sistemas (Plan 2024), las correlativas de “Inglés 3” son: Álgebra I, Lógica I.\n\nConsejo\nUsuario: “Dame el consejo para Programación”\nRespuesta: Sugerencia para “Programación” en Lic. Sistemas (Plan 2024): “Repasar estructuras de control y practicar ejercicios cortos diarios”.\n\nPrograma (obligatorio traer “Contenido”)\nUsuario: “¿Cuál es el programa de Inglés 3?”\nProceso:\n\nSELECT DISTINCT \"Carrera\",\"Programa\" FROM \"data\".programas_contenidos WHERE \"Carrera\"='<carrera_valida>';\n\nElegir el programa que mejor matchee “Inglés 3”.\n\nSELECT \"Carrera\",\"Programa\",\"Contenido\" FROM \"data\".programas_contenidos WHERE \"Carrera\"='<carrera_valida>' AND \"Programa\"='<programa_elegido>';\nRespuesta: Programa: “Inglés 3 — Lic. Sistemas”. Contenido: [resumen o fragmento].\n\nREGLAS DE SEGURIDAD\n\nSolo SELECT.\n\nSolo sobre:\n\n\"data\".mv_materias\n\n\"data\".consejos_materias\n\n\"data\".programas_contenidos\n\nUsar los valores exactos de la base en SQL.\n\nNo repetir SELECT si ya se cargaron datasets.\n\nMANEJO DE NO ENCONTRADOS\n\nMateria no hallada: sugerir 2–3 similares.\n\nConsejo no hallado: informar y ofrecer listar todos.\n\nPrograma no claro: mostrar 2–3 opciones y pedir confirmación."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        224
+      ],
+      "id": "40cac493-d52c-4b6f-a7d5-f5fb3c08c663",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Execute a SQL query in Postgres",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI(\"query\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        400
+      ],
+      "id": "1b1410df-e8d1-4479-bac7-d429e162aa3b",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "pHZT1xMuZxkMGc1E",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        512
+      ],
+      "id": "27e54830-c54c-4992-b254-475655a9bb3e",
+      "name": "Memory - Session",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "model": "gemma2:9b-instruct-q4_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        256,
+        512
+      ],
+      "id": "11b031c3-29e6-4e32-929c-ebfdd5f91d8b",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "qR5HKeb3JgyYref6",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        224
+      ],
+      "id": "9ba92d96-9b0c-44fe-8119-8f45be112aba",
+      "name": "When chat message received",
+      "webhookId": "05f15ef0-ccbc-468e-b035-b4b83db0685e"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory - Session": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1c33649c-d8e9-484d-b4c4-4b045e5dabc7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a1fd7dc77f63ddf150900fea0c6cd4947736f5a41b75bb0a0da1b0316f3ab3c5"
+  },
+  "id": "keendEOoYnxNAKgy",
+  "tags": []
+}

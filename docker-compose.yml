@@ -54,12 +54,11 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
-    environment:
-      - OLLAMA_MODELS=${OLLAMA_MODELS:-llama3:8b-instruct-q4_0}
     ports:
       - "11434:11434" # API de Ollama
     volumes:
       - ollama_data:/root/.ollama
+    
 
   open-webui:
     build: 
@@ -90,6 +89,7 @@ services:
       # - DEFAULT_MODELS=llama3:8b-instruct-q4_0
 
       # Configuración de Conexión a Modelos/API
+      - OLLAMA_BASE_URL=http://ollama:11434
       # Permite el uso de las API de OpenAI.
       - ENABLE_OPENAI_API=True 
       # Configura la URL de la API base de OpenAI.
