@@ -47,7 +47,7 @@ Busca en "Selecciona un modelo" - ahora debería aparecer llama3:8b-instruct-q4_
 
 
 # 4. Ejecutar ETL
-docker compose run --rm etl
+docker compose run --rm etl 
 
 
 # Probar interfaz grafica Open WebUI con modelo Llama3
