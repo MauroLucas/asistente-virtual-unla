@@ -64,7 +64,7 @@ El proyecto implementa una arquitectura modular basada en contenedores Docker:
 
 ### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/tu-usuario/asistente-virtual-unla.git
+git clone https://github.com/MauroLucas/asistente-virtual-unla.git
 cd asistente-virtual-unla
 ```
 
