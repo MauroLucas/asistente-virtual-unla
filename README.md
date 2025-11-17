@@ -44,8 +44,171 @@ El proyecto implementa una arquitectura modular basada en contenedores Docker:
 
 ---
 
+## 📦 Requisitos Previos
+
+### Software Necesario
+
+- **Docker** (v20.10+)
+- **Docker Compose** (v2.0+)
+- **Git**
+
+### Recursos de Hardware Recomendados
+
+- **RAM**: 8GB mínimo (16GB recomendado)
+- **Almacenamiento**: 20GB libres
+- **CPU**: 4 núcleos o más
+
 ---
 
+## 🚀 Instalación y Configuración
+
+### 1. Clonar el Repositorio
+```bash
+git clone https://github.com/MauroLucas/asistente-virtual-unla.git
+cd asistente-virtual-unla
+```
+
+### 2. Configurar Variables de Entorno
+
+Crear archivo `.env` en la raíz del proyecto:
+```bash
+# PostgreSQL - Base de Conocimiento
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=tu_password_seguro
+POSTGRES_DB=knowledge_db
+POSTGRES_KB_HOST_PORT=5433
+
+# Usuarios de Aplicación
+APP_RO_USER=app_ro
+APP_RO_PASSWORD=app_ro_password
+ETL_USER=etl
+ETL_PASSWORD=etl_password
+
+# PostgreSQL - Base de n8n
+N8N_DB=n8n_db
+N8N_USER=n8n_user
+N8N_PASSWORD=n8n_password
+POSTGRES_N8N_HOST_PORT=5435
+
+# Configuración General
+TZ=America/Argentina/Buenos_Aires
+
+# Google Drive - Programas Académicos
+WORD_FOLDER_PROGRAMAS_URL="https://drive.google.com/drive/folders/tu_carpeta_id"
+```
+
+> ⚠️ **Importante**: Cambiar las contraseñas por valores seguros.
+
+### 3. Iniciar los Servicios
+```bash
+# Levantar todos los contenedores
+docker-compose up -d
+
+# Verificar que los servicios estén corriendo
+docker-compose ps
+```
+
+### 4. Crear usuarios para los servicios
+```bash
+# Ejecutar script de inicialización de la base de datos
+docker compose exec postgres_kb bash -lc "tr -d '\r' < /docker-entrypoint-initdb.d/01-init.sh > /tmp/01-init.sh && chmod +x /tmp/01-init.sh && /tmp/01-init.sh"
+
+```
+
+### 5. Configurar Modelo de Lenguaje
+```bash
+# Descargar modelo Llama3.1 (8B parámetros)
+docker-compose exec ollama ollama pull llama3.1:8b-instruct-q4_0
+
+# Descargar modelo Qwen2.5 (14B parámetros)
+docker-compose exec ollama ollama pull qwen2.5:14b-instruct-q4_0
+
+# Verificar instalación
+docker-compose exec ollama ollama list
+```
+
+### 6. Ejecutar Proceso ETL
+```bash
+# Cargar datos académicos en PostgreSQL
+docker-compose run --rm etl
+
+# Verificar carga de datos
+docker-compose exec postgres_kb psql -U postgres -d knowledge_db -c "SELECT COUNT(*) FROM data.mv_materias;"
+```
+
+---
+
+## 🎯 Uso del Sistema
+
+### Acceso a Open WebUI
+
+1. Abrir navegador en: `http://localhost:3000`
+2. La interfaz cargará automáticamente (WEBUI_AUTH=False)
+3. Seleccionar modelo: **UNLa Asistente Virtual Académico**
+
+### Importar otro Modelo Personalizado
+
+Si necesitas importar el otro modelo personalizado:
+
+1. Ir a **Workspace** → **Models**
+2. Click en **Import Models**
+3. Cargar archivo: `Workflows/Model-UNLa IA Asistente Académico.json`
+4. Editar modelo:
+   - **Click en el Icono de Editar(lapiz)**
+   - **Click en Select a Base Model**: Elegir UNLa Asistente Virtual Académico
+   - **Click en Boton Guardar y Actualizar**
+
+### Ejemplos de Consultas
+```
+👤 Usuario: "¿Cuáles son las correlativas de Matemática 3 del plan 2014?"
+
+🤖 Asistente: "En Lic. Sistemas (Plan 2014), la materia 
+'Matemática 3' tiene como correlativa a 'Matemática 2'."
+```
+```
+👤 Usuario: "Dame consejos sobre la materia Programación Concurrente"
+
+🤖 Asistente: "Sugerencia para 'Programación Concurrente' 
+en Lic. Sistemas (Plan 2024): Reforzar conceptos de sistemas 
+operativos y practicar con ejercicios de sincronización."
+```
+
+---
+
+## 🔧 Configuración de n8n
+
+### Acceso a la Interfaz
+
+- **URL**: `http://localhost:5678`
+- **Credenciales**: Requiere autenticación inicial:
+1. **Primer acceso**: Completar formulario de registro
+2. **Accesos posteriores**: Usar email y contraseña registrados
+
+### Importar Workflows
+
+Los workflows del proyecto se encuentran en la carpeta `Workflows/`:
+
+1. **W_Asistente_Virtual_Prueba_Inicial.json**
+   - Workflow de pruebas con OpenRouter
+   - Usa modelo GPT-4.1-mini
+
+2. **Workflow_Webhook_Open_WebUI.json**
+   - Workflow principal de integración
+   - Endpoints compatibles con protocolo OpenAI
+
+3. **Workflow_Ollama_Modelos_Locales.json**
+   - Workflow para evaluación de modelos locales
+   - Solo para analisis comparativo
+
+**Procedimiento de importación en n8n:**
+1. Ir a **Workflows** → **Import from File**
+2. Seleccionar archivo `.json`
+3. Verificar credenciales de PostgreSQL, Open Router (en workflows W_Asistente_Virtual_Prueba_Inicial.json y Workflow_Webhook_Open_WebUI.json) y Ollama (en workflow Workflow_Ollama_Modelos_Locales.json)
+4. Activar el workflow
+
+> 📌 **Regla clave**: En los flujos n8n, siempre usar nombres de servicio (`ollama`, `postgres_kb`) en lugar de `localhost`.
+
+---
 
 ## 📂 Estructura del Proyecto
 ```
@@ -125,169 +288,6 @@ ASISTENTE-VIRTUAL-UNLA/
 
 ---
 
-## 📦 Requisitos Previos
-
-### Software Necesario
-
-- **Docker** (v20.10+)
-- **Docker Compose** (v2.0+)
-- **Git**
-
-### Recursos de Hardware Recomendados
-
-- **RAM**: 8GB mínimo (16GB recomendado)
-- **Almacenamiento**: 20GB libres
-- **CPU**: 4 núcleos o más
-
----
-
-## 🚀 Instalación y Configuración
-
-### 1. Clonar el Repositorio
-```bash
-git clone https://github.com/MauroLucas/asistente-virtual-unla.git
-cd asistente-virtual-unla
-```
-
-### 2. Configurar Variables de Entorno
-
-Crear archivo `.env` en la raíz del proyecto:
-```bash
-# PostgreSQL - Base de Conocimiento
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=tu_password_seguro
-POSTGRES_DB=knowledge_db
-POSTGRES_KB_HOST_PORT=5433
-
-# Usuarios de Aplicación
-APP_RO_USER=app_ro
-APP_RO_PASSWORD=app_ro_password
-ETL_USER=etl
-ETL_PASSWORD=etl_password
-
-# PostgreSQL - Base de n8n
-N8N_DB=n8n_db
-N8N_USER=n8n_user
-N8N_PASSWORD=n8n_password
-POSTGRES_N8N_HOST_PORT=5435
-
-# Configuración General
-TZ=America/Argentina/Buenos_Aires
-
-# Google Drive - Programas Académicos
-WORD_FOLDER_PROGRAMAS_URL="https://drive.google.com/drive/folders/tu_carpeta_id"
-
-```
-
-> ⚠️ **Importante**: Cambiar las contraseñas por valores seguros.
-
-### 3. Iniciar los Servicios
-```bash
-# Levantar todos los contenedores
-docker-compose up -d
-
-# Verificar que los servicios estén corriendo
-docker-compose ps
-```
-
-### 4. Crear usuarios para los servicios
-```bash
-# Ejecutar script de inicialización de la base de datos
-docker compose exec postgres_kb bash -lc "tr -d '\r' < /docker-entrypoint-initdb.d/01-init.sh > /tmp/01-init.sh && chmod +x /tmp/01-init.sh && /tmp/01-init.sh"
-
-```
-
-### 5. Configurar Modelo de Lenguaje
-```bash
-# Descargar modelo Llama3.1 (8B parámetros)
-docker-compose exec ollama ollama pull llama3.1:8b-instruct-q4_0
-
-# Verificar instalación
-docker-compose exec ollama ollama list
-```
-
-### 6. Ejecutar Proceso ETL
-```bash
-# Cargar datos académicos en PostgreSQL
-docker-compose run --rm etl
-
-# Verificar carga de datos
-docker-compose exec postgres_kb psql -U postgres -d knowledge_db -c "SELECT COUNT(*) FROM data.mv_materias;"
-```
-
----
-
-## 🔧 Configuración de n8n
-
-### Acceso a la Interfaz
-
-- **URL**: `http://localhost:5678`
-- **Credenciales**: Requiere autenticación inicial:
-1. **Primer acceso**: Completar formulario de registro
-2. **Accesos posteriores**: Usar email y contraseña registrados
-
-### Importar Workflows
-
-Los workflows del proyecto se encuentran en la carpeta `Workflows/`:
-
-1. **W_Asistente_Virtual_Prueba_Inicial.json**
-   - Workflow de pruebas con OpenRouter
-   - Usa modelo GPT-4.1-mini
-
-2. **Workflow_Webhook_Open_WebUI.json**
-   - Workflow principal de integración
-   - Endpoints compatibles con protocolo OpenAI
-
-3. **Workflow_Ollama_Modelos_Locales.json**
-   - Workflow para evaluación de modelos locales
-   - Solo para analisis comparativo
-
-**Procedimiento de importación en n8n:**
-1. Ir a **Workflows** → **Import from File**
-2. Seleccionar archivo `.json`
-3. Verificar credenciales de PostgreSQL
-4. Activar el workflow
-
-> 📌 **Regla clave**: En los flujos n8n, siempre usar nombres de servicio (`ollama`, `postgres_kb`) en lugar de `localhost`.
-
----
-
-## 🎯 Uso del Sistema
-
-### Acceso a Open WebUI
-
-1. Abrir navegador en: `http://localhost:3000`
-2. La interfaz cargará automáticamente (WEBUI_AUTH=False)
-3. Seleccionar modelo: **UNLa Asistente Virtual Académico**
-
-### Importar otro Modelo Personalizado
-
-Si necesitas importar el otro modelo personalizado:
-
-1. Ir a **Workspace** → **Models**
-2. Click en **Import Models**
-3. Cargar archivo: `Workflows/Model-UNLa IA Asistente Académico.json`
-4. Editar modelo:
-   - **Click en el Icono de Editar(lapiz)**
-   - **Click en Select a Base Model**: Elegir UNLa Asistente Virtual Académico
-   - **Click en Boton Guardar y Actualizar**
-
-### Ejemplos de Consultas
-```
-👤 Usuario: "¿Cuáles son las correlativas de Matemática 3 del plan 2014?"
-
-🤖 Asistente: "En Lic. Sistemas (Plan 2014), la materia 
-'Matemática 3' tiene como correlativa a 'Matemática 2'."
-```
-```
-👤 Usuario: "Dame consejos sobre la materia Programación Concurrente"
-
-🤖 Asistente: "Sugerencia para 'Programación Concurrente' 
-en Lic. Sistemas (Plan 2024): Reforzar conceptos de sistemas 
-operativos y practicar con ejercicios de sincronización."
-```
-
-
 ## 🔍 Solución de Problemas
 
 ### Error: "No se puede conectar a PostgreSQL"
@@ -318,16 +318,11 @@ docker-compose exec ollama ollama pull llama3.1:8b-instruct-q4_0
 3. Validar configuración en Open WebUI:
    - Ir a **Settings** → **Connections**
    - Verificar URL: `http://n8n:5678/webhook/v1`
+4. En caso de que no se muestre el modelo personalizado UNLa Asistente Virtual Académico en Open WebUI, reiniciar el servicio de open-webui con este comando:
 
-### Error ETL: "No se encuentran archivos Excel"
 ```bash
-# Verificar montaje de volúmenes
-docker-compose exec etl ls -la /app/data
-
-# Verificar permisos
-docker-compose exec etl chmod 644 /app/data/*.xlsx
+docker compose restart open-webui
 ```
-
 ---
 
 ## 📊 Monitoreo y Logs
