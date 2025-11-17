@@ -101,7 +101,6 @@ services:
 
       # Deshabilitar características que pueden mostrar Arena Model
       - ENABLE_EVALUATION_ARENA_MODELS=False
-      
       # Control de persistencia / caché
       # Las variables de configuración se leen siempre de las variables de entorno 
       # en cada reinicio

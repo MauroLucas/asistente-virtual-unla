@@ -1,2 +1,31 @@
+# Variables de entorno - CRÍTICO PARA SEGURIDAD
 .env
+.env.local
+.env.production
+
+# Archivos sensibles de configuración
+config.json
+credentials/
+
+# Archivos de datos temporales y de desarrollo
+*.tmp
+*.temp
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs de aplicación
+*.log
+logs/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
 
