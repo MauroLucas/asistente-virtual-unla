@@ -95,6 +95,7 @@ TZ=America/Argentina/Buenos_Aires
 
 # Google Drive - Programas Académicos
 WORD_FOLDER_PROGRAMAS_URL="https://drive.google.com/drive/folders/tu_carpeta_id"
+
 ```
 
 > ⚠️ **Importante**: Cambiar las contraseñas por valores seguros.
@@ -135,6 +136,41 @@ docker-compose exec postgres_kb psql -U postgres -d knowledge_db -c "SELECT COUN
 
 ---
 
+## 🔧 Configuración de n8n
+
+### Acceso a la Interfaz
+
+- **URL**: `http://localhost:5678`
+- **Credenciales**: Requiere autenticación inicial:
+1. **Primer acceso**: Completar formulario de registro
+2. **Accesos posteriores**: Usar email y contraseña registrados
+
+### Importar Workflows
+
+Los workflows del proyecto se encuentran en la carpeta `Workflows/`:
+
+1. **W_Asistente_Virtual_Prueba_Inicial.json**
+   - Workflow de pruebas con OpenRouter
+   - Usa modelo GPT-4.1-mini
+
+2. **Workflow_Webhook_Open_WebUI.json**
+   - Workflow principal de integración
+   - Endpoints compatibles con protocolo OpenAI
+
+3. **Workflow_Ollama_Modelos_Locales.json**
+   - Workflow para evaluación de modelos locales
+   - Solo para analisis comparativo
+
+**Procedimiento de importación en n8n:**
+1. Ir a **Workflows** → **Import from File**
+2. Seleccionar archivo `.json`
+3. Verificar credenciales de PostgreSQL
+4. Activar el workflow
+
+> 📌 **Regla clave**: En los flujos n8n, siempre usar nombres de servicio (`ollama`, `postgres_kb`) en lugar de `localhost`.
+
+---
+
 ## 🎯 Uso del Sistema
 
 ### Acceso a Open WebUI
@@ -172,40 +208,6 @@ operativos y practicar con ejercicios de sincronización."
 
 ---
 
-## 🔧 Configuración de n8n
-
-### Acceso a la Interfaz
-
-- **URL**: `http://localhost:5678`
-- **Credenciales**: Requiere autenticación inicial:
-1. **Primer acceso**: Completar formulario de registro
-2. **Accesos posteriores**: Usar email y contraseña registrados
-
-### Importar Workflows
-
-Los workflows del proyecto se encuentran en la carpeta `Workflows/`:
-
-1. **W_Asistente_Virtual_Prueba_Inicial.json**
-   - Workflow de pruebas con OpenRouter
-   - Usa modelo GPT-4.1-mini
-
-2. **Workflow_Webhook_Open_WebUI.json**
-   - Workflow principal de integración
-   - Endpoints compatibles con protocolo OpenAI
-
-3. **Workflow_Ollama_Modelos_Locales.json**
-   - Workflow para evaluación de modelos locales
-   - Solo para analisis comparativo
-
-**Procedimiento de importación en n8n:**
-1. Ir a **Workflows** → **Import from File**
-2. Seleccionar archivo `.json`
-3. Verificar credenciales de PostgreSQL
-4. Activar el workflow
-
-> 📌 **Regla clave**: En los flujos n8n, siempre usar nombres de servicio (`ollama`, `postgres_kb`) en lugar de `localhost`.
-
----
 
 ## 📂 Estructura del Proyecto
 ```
