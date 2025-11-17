@@ -1,4 +1,4 @@
-# Prototipo de Asistente Virtual Académico (Chatbot) basado en IA
+# Prototipo de Asistente Virtual Académico (Chatbot) basado en Inteligencia Artificial (IA) para Estudiantes de Licenciatura en Sistemas
 
 ## Universidad Nacional de Lanús - Licenciatura en Sistemas
 
