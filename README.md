@@ -368,7 +368,7 @@ SELECT * FROM log.log_procesos ORDER BY fecha_inicio_proceso DESC LIMIT 10;
 ## 📚 Documentación Adicional
 
 - **[Documentación completa del TFI](https://docs.google.com/document/d/13Z-DYy2YvGGGHRydl_2dUq1frrMUTQB5P5lmm3P3AEk/edit?usp=sharing)**
-- **[Diagrama de Arquitectura](./docs/images/arquitectura.jpg)**
+- **[Diagrama de Arquitectura](./docs/images/arquitectura.svg)**
 - **[Diagrama ER](https://cristian1891.github.io/DER_Documentacion/)**
 - **[Prompts del AI Agent](./Workflows/)**
 
